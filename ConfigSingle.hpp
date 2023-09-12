@@ -1,6 +1,32 @@
+//===- ConfigSingle.hpp ---------------------------------------------===//
+//
+// Copyright (C) 2023 Eightfold
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+//     limitations under the License.
+//
+//===----------------------------------------------------------------===//
+//
+//  This file acts as a source for in-language configuration.
+//
+//===----------------------------------------------------------------===//
+
 #if !defined(EIGHTFOLD_CONFIG_SINGLE_HPP) && !defined(EIGHTFOLD_CONFIG)
 #define EIGHTFOLD_CONFIG_SINGLE_HPP
 #define EIGHTFOLD_CONFIG
+
+#if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
+#  error Custom config settings currently unsupported, check back later.
+#endif
 
 #define COMPILER_PRAGMA(...) _Pragma(#__VA_ARGS__)
 
@@ -58,14 +84,25 @@ REGION_BEGIN("config.macro.opts")
 #  define COMPILER_UNDEF_CORE 0
 #endif
 
+#if defined(__has_include)
 /// Allows `Boost.Preprocessor` to be used for more advanced macros
-#ifndef COMPILER_BOOST_EXTEND
-#  if defined(__has_include) && __has_include(<boost/preprocessor.hpp>)
-#    define COMPILER_BOOST_EXTEND 1
-#  else
-#    define COMPILER_BOOST_EXTEND 0
+#  ifndef COMPILER_BOOST_EXTEND
+#    if __has_include(<boost/preprocessor.hpp>)
+#      define COMPILER_BOOST_EXTEND 1
+#    else
+#      define COMPILER_BOOST_EXTEND 0
+#    endif
 #  endif
-#endif
+
+#else
+
+#  define __has_include(...) 0
+#  undef COMPILER_BOOST_EXTEND
+#  define COMPILER_BOOST_EXTEND 0
+#  undef COMPILER_BACKWARDS_UNDEF
+#  define COMPILER_BACKWARDS_UNDEF 0
+
+#endif // defined(__has_include)
 
 REGION_CLOSE("config.macro.opts")
 
@@ -185,9 +222,9 @@ REGION_BEGIN("config.macro.meta")
 #define CPPVER23_NEXT 26
 
 /**
- * First 2 bits are used to identify the compiler supertype (0b01 for GNU, 0b10 for LLVM).
+ * First 2 bits are used to identify the compiler supertype (01 for GNU, 10 for LLVM).
  * This is used because many "compiler dependent" features only vary between supertypes.
- * Other than MSVC, your average compiler will be based on GCC or LLVM
+ * Other than MSVC, your average compiler will be based on GCC or LLVM.
  */
 
 #define VCOMPILER_UNKNOWN   0b0000000000
@@ -201,6 +238,35 @@ REGION_BEGIN("config.macro.meta")
 #define VCOMPILER_MINGW     0b0100100001
 #define VCOMPILER_NVCPP     0b0001000000
 #define VCOMPILER_ELLCC     0b1010000000
+
+/**
+ * First 2 bits are used to identify variations of the compiler.
+ * This is really only 16/32/64 bit modes.
+ */
+
+#define VPLATFORM_UNKNOWN   0b0000000000
+#define VPLATFORM_WINDOWS   0b0000000001
+# define VPLATFORM_WIN_16   0b0100000001
+# define VPLATFORM_WIN_32   0b1000000001
+# define VPLATFORM_WIN_64   0b1100000001
+#define VPLATFORM_LINUX     0b0000000010
+#define VPLATFORM_ANDROID   0b0000000100
+#define VPLATFORM_MACOS     0b0000001000
+#define VPLATFORM_IOS       0b0000010000
+#define VPLATFORM_HAIKU     0b0000100000
+#define VPLATFORM_SOLARIS   0b0001000000
+#define VPLATFORM_SUNOS     0b0010000000
+
+/*
+ * The following predefines the register size constants.
+ * Defined as flags because of things like thumb on ARM.
+ * It is unlikely 8/16 bit sizes will be fully supported.
+ */
+
+#define REG8    0b0001
+#define REG16   0b0010
+#define REG32   0b0100
+#define REG64   0b1000
 
 /// Number of supported C++ versions
 #define COMPILER_VERSION_COUNT 6
@@ -410,6 +476,7 @@ REGION_CLOSE("config.macro.cpp")
 REGION_BEGIN("config.macro.compiler")
 // ---------------------------------------------------------------------------------------------------------------- //
 
+#ifndef COMPILER_CUSTOM
 #if defined(__clang__)
 #  define COMPILER_LLVM "LLVM"
 #  if defined(__ELLCC__)
@@ -459,6 +526,7 @@ REGION_BEGIN("config.macro.compiler")
 #    error Your compiler is currently unsupported!
 #  endif
 #endif
+#endif // COMPILER_CUSTOM
 
 #define COMPILER_NAME STRINGIFY(COMPILER_TYPE)
 
@@ -519,7 +587,45 @@ REGION_BEGIN("config.macro.compiler")
 #  define RESTRICT
 #endif
 
-#ifdef COMPILER_MSVC
+#if defined(COMPILER_LLVM) || defined(COMPILER_GNU)
+#  define NONNULL(...) __attribute__((nonnull(__VA_ARGS__)))
+#else
+#  define NONNULL(...)
+#endif
+
+#if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
+#  define ALWAYS_INLINE __attribute__((always_inline))
+#elif defined(COMPILER_GNU)
+#  define ALWAYS_INLINE [[gnu::always_inline]]
+#elif defined(COMPILER_LLVM)
+#  define ALWAYS_INLINE [[clang::always_inline]]
+#elif defined(COMPILER_MSVC)
+#  define ALWAYS_INLINE __forceinline
+#else
+#  define ALWAYS_INLINE
+#endif
+
+#if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
+#  define NOINLINE __attribute__((noinline))
+#elif defined(COMPILER_NVCPP)
+#  define NOINLINE __noinline__
+#elif defined(COMPILER_GNU)
+#  define NOINLINE [[gnu::noinline]]
+#elif defined(COMPILER_LLVM)
+#  define NOINLINE [[clang::noinline]]
+#elif defined(COMPILER_MSVC)
+#  define NOINLINE __declspec(noinline)
+#else
+#  define NOINLINE
+#endif
+
+#if defined(COMPILER_LLVM)
+#  define POINTER(...) [[gsl::Pointer(__VA_ARGS__)]]
+#else
+#  define POINTER(...)
+#endif
+
+#if defined(COMPILER_MSVC)
 #  define COMPILER_UUID(value) __declspec(COMPILER_UUID_I(value))
 #  define COMPILER_UUID_I(value) uuid(STRINGIFY(value))
 #else
@@ -617,6 +723,161 @@ REGION_CLOSE("config.macro.compiler")
 
 
 /**
+ * Defines macros for platform specific stuff.
+ * Probably not perfect, but can generally detect
+ * OS, architecture, etc.
+ */
+REGION_BEGIN("config.macro.platform")
+// ---------------------------------------------------------------------------------------------------------------- //
+
+/// Platform detection
+#ifndef PLATFORM_CUSTOM
+#if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
+#  define PLATFORM_WINDOWS "WINDOWS"
+#  define PLATFORM_CURR VPLATFORM_WINDOWS
+#  if defined(_WIN16) || defined(__WINDOWS__)
+#    define PLATFORM_WIN_16 WIN_16
+#    define PLATFORM_TYPE PLATFORM_WIN_16
+#  elif defined(_WIN64)
+#    define PLATFORM_WIN_64 WIN_64
+#    define PLATFORM_TYPE PLATFORM_WIN_64
+#  else
+#    define PLATFORM_WIN_32 WIN_32
+#    define PLATFORM_TYPE PLATFORM_WIN_32
+#  endif // Windows subtype
+#elif defined(__APPLE__)
+#  define PLATFORM_APPLE "APPLE"
+#  if defined(__MACH__)
+#    define PLATFORM_MACOS MACOS
+#    define PLATFORM_CURR VPLATFORM_MACOS
+#    define PLATFORM_TYPE PLATFORM_MACOS
+#  else
+#    define PLATFORM_IOS IOS
+#    define PLATFORM_CURR VPLATFORM_IOS
+#    define PLATFORM_TYPE PLATFORM_IOS
+#  endif // defined(__MACH__)
+#elif defined(__HAIKU__)
+#  define PLATFORM_HAIKU HAIKU
+#  define PLATFORM_CURR VPLATFORM_HAIKU
+#  define PLATFORM_TYPE PLATFORM_HAIKU
+#elif defined(__ANDROID__)
+#  define PLATFORM_ANDROID ANDROID
+#  define PLATFORM_CURR VPLATFORM_ANDROID
+#  define PLATFORM_TYPE PLATFORM_ANDROID
+#elif defined(__linux__)
+#  define PLATFORM_LINUX LINUX
+#  define PLATFORM_CURR VPLATFORM_LINUX
+#  define PLATFORM_TYPE PLATFORM_LINUX
+#elif defined(sun) || defined(__sun)
+#  if defined(__SVR4) || defined(__svr4__)
+#    define PLATFORM_SOLARIS SOLARIS
+#    define PLATFORM_CURR VPLATFORM_SOLARIS
+#    define PLATFORM_TYPE PLATFORM_SOLARIS
+#  else
+#    define PLATFORM_SUNOS SUNOS
+#    define PLATFORM_CURR VPLATFORM_SUNOS
+#    define PLATFORM_TYPE PLATFORM_SUNOS
+#  endif // Solaris check
+#else
+#  define PLATFORM_UNKNOWN UNKNOWN
+#  define PLATFORM_CURR VPLATFORM_UNKNOWN
+#  define PLATFORM_TYPE PLATFORM_UNKNOWN
+#  if COMPILER_STRICT_CONFORMANCE
+#    error Your platform is currently unsupported!
+#  endif
+#endif
+#endif // PLATFORM_CUSTOM
+
+/// Architecture detection
+#ifndef ARCH_CUSTOM
+#if defined(__aarch64)
+#  define ARCH_ARM64 "ARM64"
+#  define ARCH_CURR REG64
+#  define ARCH_TYPE ARCH_ARM64
+#elif defined(__arm__) || defined(__thumb__) || \
+   defined(_ARM) || defined(_M_ARM) || defined(_M_ARMT)
+#  define ARCH_ARM "ARM"
+#  if defined(__thumb__) || defined(_M_ARMT)
+#    define ARCH_ARM_THUMB "ARM_THUMB"
+#    define ARCH_CURR 0b0110 // REG16 | REG32
+#    define ARCH_TYPE ARCH_ARM_THUMB
+#  else
+#    define ARCH_CURR REG32
+#    define ARCH_TYPE ARCH_ARM
+#  endif // Thumb detection
+#elif defined (__amd64__) || defined(_M_AMD64)
+#  define ARCH_AMD "AMD"
+#  if defined(_LP32) || defined(__LP32__)
+#    define ARCH_AMD32 "AMD32"
+#    define ARCH_CURR REG32
+#    define ARCH_TYPE ARCH_AMD32
+#  else
+#    define ARCH_AMD64 "AMD64"
+#    define ARCH_CURR REG64
+#    define ARCH_TYPE ARCH_AMD64
+#  endif // 64 bit check
+#elif defined(i386) || defined(__i386) || defined(__i386)  ||   \
+  defined(__IA32__) || defined(_M_I86) || defined(_M_IX86) ||   \
+  defined(_X86_) || defined(__I86__)
+#  define ARCH_x86 "x86"
+#  if defined(_M_I86) && !(defined(__386__) || defined(_M_I386))
+#    define ARCH_x86_16 x86_16
+#    define ARCH_CURR REG16
+#    define ARCH_TYPE ARCH_x86_16
+#  else
+#    define ARCH_x86_32 x86_32
+#    define ARCH_CURR REG32
+#    define ARCH_TYPE ARCH_x86_32
+#  endif // 16 bit check
+#elif defined(__ia64__) || defined(_IA64) || defined(__IA64__) || \
+  defined(__ia64) || defined(_M_IA64) || defined(__itanium__)
+#  define ARCH_ITANIUM ITANIUM
+#  define ARCH_CURR REG64
+#  define ARCH_TYPE ARCH_ITANIUM
+#elif defined(__m68k__) || defined(M68000) || defined(__MC68K__)
+#  define ARCH_M68k M68k
+#  define ARCH_CURR 0b0110 // REG16 | REG32
+#  define ARCH_TYPE ARCH_M68k
+#elif defined(mips) || defined(__mips) || defined(__mips__)
+#  define ARCH_MIPS "MIPS"
+#  if (defined(_MIPS_ISA) && defined(_MIPS_ISA_MIPS1) || defined(_MIPS_ISA_MIPS2)) || \
+    !(defined(__MIPS_ISA3__) || defined(__MIPS_ISA4__))                            || \
+    (defined(__mips) && (__mips < 3))
+#    define ARCH_MIPS32 MIPS32
+#    define ARCH_CURR REG32
+#    define ARCH_TYPE ARCH_MIPS32
+#  else
+#    define ARCH_MIPS64 MIPS64
+#    define ARCH_CURR REG64
+#    define ARCH_TYPE ARCH_MIPS64
+#  endif // 32 bit ISA check
+#else
+#  define ARCH_UNKNOWN UNKNOWN
+#  define ARCH_CURR 0b0000
+#  define ARCH_TYPE ARCH_UNKNOWN
+#  if COMPILER_STRICT_CONFORMANCE
+#    error Your architecture is currently unsupported!
+#  endif
+#endif
+#endif // ARCH_CUSTOM
+
+/// TODO: Microarchitecture Detection
+#ifndef MICROARCH_TYPE
+#if defined(ARCH_x86)
+#endif
+#endif // MICROARCH_TYPE
+
+#define PLATFORM_NAME STRINGIFY(PLATFORM_TYPE)
+#define ARCH_NAME STRINGIFY(ARCH_TYPE)
+
+#ifndef ARCH_BITS
+#  define ARCH_BITS CHAR_BIT
+#endif
+
+REGION_CLOSE("config.macro.platform")
+
+
+/**
  * Checks the `COMPILER_BOOST_EXTEND` macro defined previously.
  * If it evaluates to true, BoostPP will be included,
  * and extension macros will be defined
@@ -639,12 +900,37 @@ REGION_BEGIN("config.macro.extend")
 REGION_CLOSE("config.macro.extend")
 
 
+/// Provides common macros that are used in source
+REGION_BEGIN("config.macro.common")
+// ---------------------------------------------------------------------------------------------------------------- //
+
+/** Concise perfect forwarding, requires <utility>. */
+#define FWD(...) std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
+
+/**
+ * Allows for generals compile failures for templates when instantiated.
+ * Requires <type_traits>.
+ */
+#define COMPILE_FAILURE(type, message) \
+   static_assert(std::is_same_v<type, struct Fail>, message);
+
+/** Assertion that is only checked in debug mode */
+#if defined(DEBUG_MODE)
+#  define DEBUG_ASSERT(...) assert(__VA_ARGS__)
+#else
+#  define DEBUG_ASSERT(...)
+#endif
+
+REGION_CLOSE("config.macro.common")
+
 
 /// Provides enums for use in switching behaviour
 REGION_BEGIN("config.type.enum")
 // ---------------------------------------------------------------------------------------------------------------- //
 
+#include <climits>
 
+//=== Compiler Config ===//
 namespace config {
     enum class CompilerSuperType {
         NONE    =   VCOMPILER_UNKNOWN,
@@ -672,15 +958,72 @@ namespace config {
         CPP11 = 11,
         CPP97 = 97,
     };
-    
+
     struct Compiler {
         static constexpr auto type = CompilerType::COMPILER_TYPE;
         static constexpr auto supertype = CompilerSuperType(COMPILER_CURR & VCOMPILER_SUPERTYPE_MASK);
         static constexpr auto standard = StandardType::CAT(CPP, COMPILER_STANDARD);
         static constexpr decltype(COMPILER_NAME) name = COMPILER_NAME;
     };
-}
+} // namespace config
+
+//=== Platform Config ===//
+namespace config {
+    enum class PlatformType {
+        UNKNOWN = VPLATFORM_UNKNOWN,
+        WIN_16  = VPLATFORM_WIN_16,
+        WIN_32  = VPLATFORM_WIN_32,
+        WIN_64  = VPLATFORM_WIN_64,
+        LINUX   = VPLATFORM_LINUX,
+        ANDROID = VPLATFORM_ANDROID,
+        MACOS   = VPLATFORM_MACOS,
+        IOS     = VPLATFORM_IOS,
+        HAIKU   = VPLATFORM_HAIKU,
+        SOLARIS = VPLATFORM_SOLARIS,
+        SUNOS   = VPLATFORM_SUNOS,
+    };
+
+    struct Platform {
+        static constexpr auto type = PlatformType::PLATFORM_TYPE;
+        static constexpr decltype(PLATFORM_NAME) name = PLATFORM_NAME;
+    };
+} // namespace config
+
+//=== Architecture Config ===//
+namespace config {
+    namespace {
+        typedef decltype(sizeof(0)) inline_size_t_;
+
+        CONSTEVAL inline_size_t_ config_arch_regmax_() noexcept {
+            constexpr inline_size_t_ reg_conf = ARCH_CURR;
+            if (reg_conf & REG64)       return 64;
+            else if (reg_conf & REG32)  return 32;
+            else if (reg_conf & REG16)  return 16;
+            else if (reg_conf & REG8)   return 8;
+            else                        return 0;
+        }
+    } // namespace `anonymous`
+
+    struct Arch {
+        static constexpr inline_size_t_ bit_count = ARCH_BITS;
+        static constexpr inline_size_t_ arch_max = config_arch_regmax_();
+        static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
+        static_assert((arch_max / bit_count) == sizeof(void*),
+            "Uneven `arch_max`, try using a custom ARCH.");
+    };
+
+    template <typename T>
+    struct Bit {
+        static constexpr auto count = Arch::bit_count;
+        static constexpr auto size = sizeof(T) * count;
+    };
+
+#if CPPVER_LEAST(17)
+    template <typename T>
+    GLOBAL auto bitsizeof = Bit<T>::size;
+#endif // CPPVER_LEAST(17)
+} // namespace config
 
 REGION_CLOSE("config.type.enum")
 
-#endif // EIGHTFOLD_CONFIG_SINGLE_HPP
+#endif  // EIGHTFOLD_CONFIG_SINGLE_HPP
