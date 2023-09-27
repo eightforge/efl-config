@@ -21,28 +21,30 @@
 //===----------------------------------------------------------------===//
 
 #if !defined(EFL_CONFIG_SINGLE_HPP) && !defined(EFL_CONFIG)
+
+#include <efl/Undefs.hpp>
 #define EFL_CONFIG
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
 #  error Custom config settings currently unsupported, check back later.
 #endif
 
-#define COMPILER_PRAGMA(...) _Pragma(#__VA_ARGS__)
+#define EFL_COMPILER_PRAGMA(...) _Pragma(#__VA_ARGS__)
 
 #if defined(_MSC_VER) || defined(_MSVC_LANG)
-#  define REGION_BEGIN(name) COMPILER_PRAGMA(region name)
-#  define REGION_CLOSE(comment) COMPILER_PRAGMA(endregion comment)
+#  define EFL_REGION_BEGIN(name) EFL_COMPILER_PRAGMA(region name)
+#  define EFL_REGION_CLOSE(comment) EFL_COMPILER_PRAGMA(endregion comment)
 #elif defined(__CODEGEARC__)
-#  define REGION_BEGIN(name) COMPILER_PRAGMA(region name)
-#  define REGION_CLOSE(...) COMPILER_PRAGMA(end_region)
+#  define EFL_REGION_BEGIN(name) EFL_COMPILER_PRAGMA(region name)
+#  define EFL_REGION_CLOSE(...) EFL_COMPILER_PRAGMA(end_region)
 #else
-#  define REGION_BEGIN(...)
-#  define REGION_CLOSE(...)
+#  define EFL_REGION_BEGIN(...)
+#  define EFL_REGION_CLOSE(...)
 #endif
 
 
 /// Provides options for modifying default config settings
-REGION_BEGIN("config.macro.opts")
+EFL_REGION_BEGIN("config.macro.opts")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 #ifndef COMPILER_STRICT_CONFORMANCE
@@ -103,106 +105,15 @@ REGION_BEGIN("config.macro.opts")
 
 #endif // defined(__has_include)
 
-REGION_CLOSE("config.macro.opts")
+EFL_REGION_CLOSE("config.macro.opts")
 
 
 /**
  * Provides essential defines for the rest of config.
  * Contextless, only implements object-like macros
  */
-REGION_BEGIN("config.macro.meta")
+EFL_REGION_BEGIN("config.macro.meta")
 // ---------------------------------------------------------------------------------------------------------------- //
-
-#if COMPILER_UNDEF_CORE
-#  undef COMPILER_USTRINGIFY_VER
-#  undef XCAT
-#  undef CAT
-#  undef TRICAT
-#  undef EXPAND
-#  undef EAT
-#  undef XSTRINGIFY
-#  undef STRINGIFY
-#  undef LSTRINGIFY
-#  undef RSTRINGIFY
-#  undef U8STRINGIFY
-#  undef U16STRINGIFY
-#  undef U32STRINGIFY
-#  undef USTRINGIFY
-#  undef COMPILER_CPP97
-#  undef COMPILER_CPP98
-#  undef COMPILER_CPP11
-#  undef COMPILER_CPP14
-#  undef COMPILER_CPP17
-#  undef COMPILER_CPP20
-#  undef COMPILER_CPP23
-#  undef CPPVER97_NEXT
-#  undef CPPVER98_NEXT
-#  undef CPPVER11_NEXT
-#  undef CPPVER14_NEXT
-#  undef CPPVER17_NEXT
-#  undef CPPVER20_NEXT
-#  undef CPPVER23_NEXT
-#  undef VCOMPILER_UNKNOWN
-#  undef VCOMPILER_GNU
-#  undef VCOMPILER_LLVM
-#  undef VCOMPILER_GCC
-#  undef VCOMPILER_CLANG
-#  undef VCOMPILER_MSVC
-#  undef VCOMPILER_ICC
-#  undef VCOMPILER_ICX
-#  undef VCOMPILER_MINGW
-#  undef VCOMPILER_NVCPP
-#  undef VCOMPILER_ELLCC
-#  undef VCOMPILER_BIT_COUNT
-#  undef COMPILER_ELLCC
-#  undef COMPILER_CURR
-#  undef COMPILER_NAME
-#  undef COMPILER_ICX
-#  undef COMPILER_CLANG
-#  undef COMPILER_LLVM
-#  undef COMPILER_ICC
-#  undef COMPILER_GNU
-#  undef COMPILER_MINGW
-#  undef COMPILER_GCC
-#  undef COMPILER_NVCPP
-#  undef COMPILER_MSVC
-#  undef COMPILER_UNKNOWN
-#  undef COMPILER_CPP_VERSION
-#  undef CPPVER_LEAST
-#  undef CPPVER_NEXT
-#  undef CPPVER_MATCH
-#  undef UNREACHABLE_I
-#  undef FORCE_INLINE
-#  undef UNREACHABLE
-#  undef CLRCALL
-#  undef STDCALL
-#  undef VECCALL
-#  undef RESTRICT
-#  undef COMPILER_UUID_I
-#  undef COMPILER_UUID
-#  undef ASSUME
-#  undef CONSTEVAL
-#  undef FDEPRECATED
-#  undef FNODISCARD
-#  undef LIKELY
-#  undef NO_UNIQUE_ADDRESS
-#  undef UNLIKELY
-#  undef FALLTHROUGH
-#  undef GLOBAL
-#  undef MAYBE_UNUSED
-#  undef NODISCARD
-#  undef DEPRECATED
-#  undef CARRIES_DEPENDENCY
-#  undef CNOEXCEPT
-#  undef NOEXCEPT
-#  undef NORETURN
-#  undef PURE
-#  undef COMPILER_FILE
-#  undef COMPILER_LINE
-#  undef COMPILER_FUNCTION
-#  undef DEBUG_ONLY
-#  undef CHAIN_HEAD
-#endif
 
 #define COMPILER_CPP97 199711L
 #define COMPILER_CPP98 199711L
@@ -281,14 +192,14 @@ REGION_BEGIN("config.macro.meta")
 #define COMPILER_ARITHMETIC_MAX 256
 #define COMPILER_RESCAN_MAX 5
 
-REGION_CLOSE("config.macro.meta")
+EFL_REGION_CLOSE("config.macro.meta")
 
 
 /**
  * Defines commonly used function-like macros.
  * Examples include CAT, EAT, STRINGIFY, etc.
  */
-REGION_BEGIN("config.macro.functions")
+EFL_REGION_BEGIN("config.macro.functions")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 #define PP_DEFER(...) PP_DEFER_I(__VA_ARGS__)
@@ -336,7 +247,7 @@ REGION_BEGIN("config.macro.functions")
 #define P_XSTRINGIFY(prefix, ...) P_XSTRINGIFY_I(prefix, #__VA_ARGS__)
 #define P_XSTRINGIFY_I(prefix, text) prefix ## text
 
-REGION_CLOSE("config.macro.functions")
+EFL_REGION_CLOSE("config.macro.functions")
 
 
 /**
@@ -345,7 +256,7 @@ REGION_CLOSE("config.macro.functions")
  * of the normal keywords (`noexcept` -> `NOEXCEPT`; `[[nodiscard]]` -> `NODISCARD`).
  * Also defines `FATTRIBUTE` macros for attributes with messages
  */
-REGION_BEGIN("config.macro.cpp")
+EFL_REGION_BEGIN("config.macro.cpp")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 #if defined(_MSC_VER) || defined(_MSVC_LANG)
@@ -468,11 +379,11 @@ REGION_BEGIN("config.macro.cpp")
 #  define COMPILER_STANDARD 97
 #endif
 
-REGION_CLOSE("config.macro.cpp")
+EFL_REGION_CLOSE("config.macro.cpp")
 
 
 /// Defines macros for things specific to individual compilers
-REGION_BEGIN("config.macro.compiler")
+EFL_REGION_BEGIN("config.macro.compiler")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 #ifndef COMPILER_CUSTOM
@@ -527,7 +438,7 @@ REGION_BEGIN("config.macro.compiler")
 #endif
 #endif // COMPILER_CUSTOM
 
-#define COMPILER_NAME STRINGIFY(COMPILER_TYPE)
+#define EFL_COMPILER_NAME STRINGIFY(COMPILER_TYPE)
 
 /**
  * This defines the keyword versions of some logical operators for C++17
@@ -647,10 +558,10 @@ REGION_BEGIN("config.macro.compiler")
  */
 
 #define GENERIC_DIAGNOSTIC(nm, sv, msg)     \
-   COMPILER_PRAGMA(nm diagnostic push)      \
-   COMPILER_PRAGMA(nm diagnostic sv msg)
+   EFL_COMPILER_PRAGMA(nm diagnostic push)      \
+   EFL_COMPILER_PRAGMA(nm diagnostic sv msg)
 #define GENERIC_POP(nm, type)               \
-   COMPILER_PRAGMA(nm type pop)
+   EFL_COMPILER_PRAGMA(nm type pop)
 
 /**
  * Check out https://developer.arm.com/documentation/101754/0620/armclang-Reference/Compiler-specific-Pragmas
@@ -718,7 +629,7 @@ LLVM_IGNORED("-Wkeyword-macro")
 #endif
 LLVM_POP(diagnostic)
 
-REGION_CLOSE("config.macro.compiler")
+EFL_REGION_CLOSE("config.macro.compiler")
 
 
 /**
@@ -726,7 +637,7 @@ REGION_CLOSE("config.macro.compiler")
  * Probably not perfect, but can generally detect
  * OS, architecture, etc.
  */
-REGION_BEGIN("config.macro.platform")
+EFL_REGION_BEGIN("config.macro.platform")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 /// Platform detection
@@ -866,14 +777,14 @@ REGION_BEGIN("config.macro.platform")
 #endif
 #endif // MICROARCH_TYPE
 
-#define PLATFORM_NAME STRINGIFY(PLATFORM_TYPE)
-#define ARCH_NAME STRINGIFY(ARCH_TYPE)
+#define EFL_PLATFORM_NAME STRINGIFY(PLATFORM_TYPE)
+#define EFL_ARCH_NAME STRINGIFY(ARCH_TYPE)
 
-#ifndef ARCH_BITS
-#  define ARCH_BITS CHAR_BIT
+#ifndef EFL_ARCH_BITS
+#  define EFL_ARCH_BITS CHAR_BIT
 #endif
 
-REGION_CLOSE("config.macro.platform")
+EFL_REGION_CLOSE("config.macro.platform")
 
 
 /**
@@ -881,7 +792,7 @@ REGION_CLOSE("config.macro.platform")
  * If it evaluates to true, BoostPP will be included,
  * and extension macros will be defined
  */
-REGION_BEGIN("config.macro.extend")
+EFL_REGION_BEGIN("config.macro.extend")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 /// TODO: Complete implementation
@@ -896,11 +807,11 @@ REGION_BEGIN("config.macro.extend")
 #  define PP_AND(x, y)      ~
 #endif
 
-REGION_CLOSE("config.macro.extend")
+EFL_REGION_CLOSE("config.macro.extend")
 
 
 /// Provides common macros that are used in source
-REGION_BEGIN("config.macro.common")
+EFL_REGION_BEGIN("config.macro.common")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 /** Concise perfect forwarding, requires <utility>. */
@@ -920,14 +831,18 @@ REGION_BEGIN("config.macro.common")
 #  define DEBUG_ASSERT(...)
 #endif
 
-REGION_CLOSE("config.macro.common")
+EFL_REGION_CLOSE("config.macro.common")
 
 
 /// Provides enums for use in switching behaviour
-REGION_BEGIN("config.type.enum")
+EFL_REGION_BEGIN("config.type.enum")
 // ---------------------------------------------------------------------------------------------------------------- //
+#ifndef _EFL_CONFIG_PERMANENT
+#define _EFL_CONFIG_PERMANENT
 
 #include <climits>
+
+namespace efl {
 
 //=== Compiler Config ===//
 namespace config {
@@ -962,7 +877,7 @@ namespace config {
         static constexpr auto type = CompilerType::COMPILER_TYPE;
         static constexpr auto supertype = CompilerSuperType(COMPILER_CURR & VCOMPILER_SUPERTYPE_MASK);
         static constexpr auto standard = StandardType::CAT(CPP, COMPILER_STANDARD);
-        static constexpr decltype(COMPILER_NAME) name = COMPILER_NAME;
+        static constexpr decltype(EFL_COMPILER_NAME) name = EFL_COMPILER_NAME;
     };
 } // namespace config
 
@@ -984,7 +899,7 @@ namespace config {
 
     struct Platform {
         static constexpr auto type = PlatformType::PLATFORM_TYPE;
-        static constexpr decltype(PLATFORM_NAME) name = PLATFORM_NAME;
+        static constexpr decltype(EFL_PLATFORM_NAME) name = EFL_PLATFORM_NAME;
     };
 } // namespace config
 
@@ -1004,9 +919,9 @@ namespace config {
     } // namespace `anonymous`
 
     struct Arch {
-        static constexpr inline_size_t_ bit_count = ARCH_BITS;
+        static constexpr inline_size_t_ bit_count = EFL_ARCH_BITS;
         static constexpr inline_size_t_ arch_max = config_arch_regmax_();
-        static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
+        static constexpr decltype(EFL_ARCH_NAME) name = EFL_ARCH_NAME;
         static_assert((arch_max / bit_count) == sizeof(void*),
                       "Uneven `arch_max`, try using a custom ARCH.");
     };
@@ -1023,6 +938,9 @@ namespace config {
 #endif // CPPVER_LEAST(17)
 } // namespace config
 
-REGION_CLOSE("config.type.enum")
+} // namespace efl
+
+#endif // _EFL_CONFIG_PERMANENT
+EFL_REGION_CLOSE("config.type.enum")
 
 #endif  // EFL_CONFIG_SINGLE_HPP
