@@ -17,12 +17,12 @@
 //===----------------------------------------------------------------===//
 //
 //  This file acts as a source for in-language configuration.
+//  Easily includible in other projects.
 //
 //===----------------------------------------------------------------===//
 
-#if !defined(EIGHTFOLD_CONFIG_SINGLE_HPP) && !defined(EIGHTFOLD_CONFIG)
-#define EIGHTFOLD_CONFIG_SINGLE_HPP
-#define EIGHTFOLD_CONFIG
+#if !defined(EFL_CONFIG_SINGLE_HPP) && !defined(EFL_CONFIG)
+#define EFL_CONFIG_SINGLE_HPP
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
 #  error Custom config settings currently unsupported, check back later.
@@ -1026,4 +1026,4 @@ namespace config {
 
 REGION_CLOSE("config.type.enum")
 
-#endif  // EIGHTFOLD_CONFIG_SINGLE_HPP
+#endif  // EFL_CONFIG_SINGLE_HPP
