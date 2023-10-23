@@ -24,6 +24,7 @@
 
 #include <efl/Undefs.hpp>
 #define EFL_CONFIG
+#define EFL_CONFIG_VERSION "1.0.0"
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
 #  error Custom config settings currently unsupported, check back later.
