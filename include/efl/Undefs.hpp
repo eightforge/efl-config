@@ -70,6 +70,7 @@
 #undef COMPILER_UNKNOWN
 #undef COMPILER_UUID
 #undef COMPILER_UUID_I
+#undef CONST
 #undef CONSTEVAL
 #undef CPPVER
 #undef DEBUG_ASSERT
