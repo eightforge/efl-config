@@ -23,7 +23,10 @@
 
 #if !defined(EFL_CONFIG_SINGLE_HPP) && !defined(EFL_CONFIG)
 #define EFL_CONFIG_SINGLE_HPP
-#define EFL_CONFIG_VERSION "1.0.1"
+
+#ifndef EFL_CONFIG_VERSION
+#  define EFL_CONFIG_VERSION "1.0.2"
+#endif
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
 #  error Custom config settings currently unsupported, check back later.
@@ -129,6 +132,7 @@ REGION_BEGIN("config.macro.meta")
 #  undef ARCH_MIPS
 #  undef ARCH_MIPS32
 #  undef ARCH_MIPS64
+#  undef ARCH_REGMAX
 #  undef ARCH_TYPE
 #  undef ARCH_UNKNOWN
 #  undef ARCH_x86
@@ -626,13 +630,13 @@ REGION_BEGIN("config.macro.compiler")
 #endif
 
 #if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
-#  define ALWAYS_INLINE __attribute__((always_inline))
+#  define ALWAYS_INLINE inline __attribute__((always_inline))
 #  define NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_NVCPP)
 #  define ALWAYS_INLINE __forceinline__
 #  define NOINLINE __noinline__
 #elif defined(COMPILER_GNU)
-#  define ALWAYS_INLINE [[gnu::always_inline]]
+#  define ALWAYS_INLINE [[gnu::always_inline]] inline
 #  define NOINLINE [[gnu::noinline]]
 #elif defined(COMPILER_LLVM)
 #  define ALWAYS_INLINE [[clang::always_inline]]
@@ -896,6 +900,18 @@ REGION_BEGIN("config.macro.platform")
 #define PLATFORM_NAME STRINGIFY(PLATFORM_TYPE)
 #define ARCH_NAME STRINGIFY(ARCH_TYPE)
 
+#if   (ARCH_CURR & REG64) != 0
+#  define ARCH_REGMAX 64
+#elif (ARCH_CURR & REG32) != 0
+#  define ARCH_REGMAX 32
+#elif (ARCH_CURR & REG16) != 0
+#  define ARCH_REGMAX 16
+#elif (ARCH_CURR & REG8)  != 0
+#  define ARCH_REGMAX 8
+#else
+#  error Could not determine ARCH_REGMAX!
+#endif
+
 #ifndef ARCH_BITS
 #  define ARCH_BITS CHAR_BIT
 #endif
@@ -1017,23 +1033,14 @@ namespace config {
 
 //=== Architecture Config ===//
 namespace config {
-    namespace detail_ {
-        typedef decltype(sizeof(0)) inline_size_t_;
-
-        CONSTEVAL inline_size_t_ config_arch_regmax_() noexcept {
-            constexpr inline_size_t_ reg_conf = ARCH_CURR;
-            if (reg_conf & REG64)       return 64;
-            else if (reg_conf & REG32)  return 32;
-            else if (reg_conf & REG16)  return 16;
-            else if (reg_conf & REG8)   return 8;
-            else                        return 0;
-        }
-    } // namespace detail_
+namespace detail_ {
+    typedef decltype(sizeof(0)) inline_size_t_;
+} // namespace detail_
 
     struct Arch {
-        static constexpr detail_::inline_size_t_ bit_count = ARCH_BITS;
-        static constexpr auto arch_max = detail_::config_arch_regmax_();
         static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
+        static constexpr auto arch_max = ARCH_REGMAX;
+        static constexpr detail_::inline_size_t_ bit_count = ARCH_BITS;
         static_assert((arch_max / bit_count) == sizeof(void*),
             "Uneven `arch_max`, try using a custom ARCH.");
     };
