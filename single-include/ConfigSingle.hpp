@@ -58,7 +58,7 @@ REGION_BEGIN("config.macro.opts")
 #  endif
 #endif
 
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(EFLI_NDEBUG_)
 #  undef COMPILER_DEBUG
 #  define COMPILER_DEBUG 0
 #elif !defined(COMPILER_DEBUG)
@@ -630,19 +630,19 @@ REGION_BEGIN("config.macro.compiler")
 #endif
 
 #if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
-#  define ALWAYS_INLINE inline __attribute__((always_inline))
+#  define ALWAYS_INLINE __attribute__((always_inline)) inline
 #  define NOINLINE __attribute__((noinline))
 #elif defined(COMPILER_NVCPP)
-#  define ALWAYS_INLINE __forceinline__
+#  define ALWAYS_INLINE __forceinline__ inline
 #  define NOINLINE __noinline__
 #elif defined(COMPILER_GNU)
 #  define ALWAYS_INLINE [[gnu::always_inline]] inline
 #  define NOINLINE [[gnu::noinline]]
 #elif defined(COMPILER_LLVM)
-#  define ALWAYS_INLINE [[clang::always_inline]]
+#  define ALWAYS_INLINE [[clang::always_inline]] inline
 #  define NOINLINE [[clang::noinline]]
 #elif defined(COMPILER_MSVC)
-#  define ALWAYS_INLINE __forceinline
+#  define ALWAYS_INLINE __forceinline inline
 #  define NOINLINE __declspec(noinline)
 #else
 #  define ALWAYS_INLINE
