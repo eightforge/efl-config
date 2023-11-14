@@ -974,86 +974,86 @@ REGION_BEGIN("config.type.enum")
 
 //=== Compiler Config ===//
 namespace config {
-    enum class CompilerSuperType {
-        NONE    =   VCOMPILER_UNKNOWN,
-        GNU     =   VCOMPILER_GNU,
-        LLVM    =   VCOMPILER_LLVM,
-    };
+  enum class CompilerSuperType {
+    NONE    =   VCOMPILER_UNKNOWN,
+    GNU     =   VCOMPILER_GNU,
+    LLVM    =   VCOMPILER_LLVM,
+  };
 
-    enum class CompilerType {
-        UNKNOWN =   VCOMPILER_UNKNOWN,
-        GCC     =   VCOMPILER_GCC,
-        CLANG   =   VCOMPILER_CLANG,
-        MSVC    =   VCOMPILER_MSVC,
-        ICC     =   VCOMPILER_ICC,
-        ICX     =   VCOMPILER_ICX,
-        MINGW   =   VCOMPILER_MINGW,
-        NVCPP   =   VCOMPILER_NVCPP,
-        ELLCC   =   VCOMPILER_ELLCC,
-    };
+  enum class CompilerType {
+    UNKNOWN =   VCOMPILER_UNKNOWN,
+    GCC     =   VCOMPILER_GCC,
+    CLANG   =   VCOMPILER_CLANG,
+    MSVC    =   VCOMPILER_MSVC,
+    ICC     =   VCOMPILER_ICC,
+    ICX     =   VCOMPILER_ICX,
+    MINGW   =   VCOMPILER_MINGW,
+    NVCPP   =   VCOMPILER_NVCPP,
+    ELLCC   =   VCOMPILER_ELLCC,
+  };
 
-    enum class StandardType {
-        CPP23 = 23,
-        CPP20 = 20,
-        CPP17 = 17,
-        CPP14 = 14,
-        CPP11 = 11,
-        CPP97 = 97,
-    };
+  enum class StandardType {
+    CPP23 = 23,
+    CPP20 = 20,
+    CPP17 = 17,
+    CPP14 = 14,
+    CPP11 = 11,
+    CPP97 = 97,
+  };
 
-    struct Compiler {
-        static constexpr auto type = CompilerType::COMPILER_TYPE;
-        static constexpr auto supertype = CompilerSuperType(COMPILER_CURR & VCOMPILER_SUPERTYPE_MASK);
-        static constexpr auto standard = StandardType::CAT(CPP, COMPILER_STANDARD);
-        static constexpr decltype(COMPILER_NAME) name = COMPILER_NAME;
-    };
+  struct Compiler {
+    static constexpr auto type = CompilerType::COMPILER_TYPE;
+    static constexpr auto supertype = CompilerSuperType(COMPILER_CURR & VCOMPILER_SUPERTYPE_MASK);
+    static constexpr auto standard = StandardType::CAT(CPP, COMPILER_STANDARD);
+    static constexpr decltype(COMPILER_NAME) name = COMPILER_NAME;
+  };
 } // namespace config
 
 //=== Platform Config ===//
 namespace config {
-    enum class PlatformType {
-        UNKNOWN = VPLATFORM_UNKNOWN,
-        WIN_16  = VPLATFORM_WIN_16,
-        WIN_32  = VPLATFORM_WIN_32,
-        WIN_64  = VPLATFORM_WIN_64,
-        LINUX   = VPLATFORM_LINUX,
-        ANDROID = VPLATFORM_ANDROID,
-        MACOS   = VPLATFORM_MACOS,
-        IOS     = VPLATFORM_IOS,
-        HAIKU   = VPLATFORM_HAIKU,
-        SOLARIS = VPLATFORM_SOLARIS,
-        SUNOS   = VPLATFORM_SUNOS,
-    };
+  enum class PlatformType {
+    UNKNOWN = VPLATFORM_UNKNOWN,
+    WIN_16  = VPLATFORM_WIN_16,
+    WIN_32  = VPLATFORM_WIN_32,
+    WIN_64  = VPLATFORM_WIN_64,
+    LINUX   = VPLATFORM_LINUX,
+    ANDROID = VPLATFORM_ANDROID,
+    MACOS   = VPLATFORM_MACOS,
+    IOS     = VPLATFORM_IOS,
+    HAIKU   = VPLATFORM_HAIKU,
+    SOLARIS = VPLATFORM_SOLARIS,
+    SUNOS   = VPLATFORM_SUNOS,
+  };
 
-    struct Platform {
-        static constexpr auto type = PlatformType::PLATFORM_TYPE;
-        static constexpr decltype(PLATFORM_NAME) name = PLATFORM_NAME;
-    };
+  struct Platform {
+    static constexpr auto type = PlatformType::PLATFORM_TYPE;
+    static constexpr decltype(PLATFORM_NAME) name = PLATFORM_NAME;
+  };
 } // namespace config
 
 //=== Architecture Config ===//
 namespace config {
 namespace detail_ {
-    typedef decltype(sizeof(0)) inline_size_t_;
+  typedef decltype(sizeof(0)) inline_size_t_;
 } // namespace detail_
 
-    struct Arch {
-        static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
-        static constexpr auto arch_max = ARCH_REGMAX;
-        static constexpr detail_::inline_size_t_ bit_count = ARCH_BITS;
-        static_assert((arch_max / bit_count) == sizeof(void*),
-            "Uneven `arch_max`, try using a custom ARCH.");
-    };
+  struct Arch {
+    static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
+    static constexpr auto arch_max = ARCH_REGMAX;
+    static constexpr detail_::inline_size_t_ bit_count = ARCH_BITS;
+    static_assert((arch_max / bit_count) == sizeof(void*),
+      "Uneven `arch_max`, try using a custom ARCH.");
+  };
 
-    template <typename T>
-    struct Bit {
-        static constexpr auto count = Arch::bit_count;
-        static constexpr auto size = sizeof(T) * count;
-    };
+  template <typename T>
+  struct Bit {
+    static constexpr auto count = Arch::bit_count;
+    static constexpr auto size = sizeof(T) * count;
+  };
 
 #if CPPVER_LEAST(17)
-    template <typename T>
-    GLOBAL auto bitsizeof = Bit<T>::size;
+  template <typename T>
+  GLOBAL auto bitsizeof = Bit<T>::size;
 #endif // CPPVER_LEAST(17)
 } // namespace config
 

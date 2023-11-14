@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.11)
 include_guard(DIRECTORY)
 
 project(
-    efl-config
-    VERSION 1.0.3
-    LANGUAGES CXX
+  efl-config
+  VERSION 1.0.3
+  LANGUAGES CXX
 )
 
 option(EFL_CONFIG_SINGLE "Enable the inclusion of `ConfigSingle.hpp`" OFF)
