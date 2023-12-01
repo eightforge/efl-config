@@ -25,7 +25,7 @@
 #define EFL_CONFIG_SINGLE_HPP
 
 #ifndef EFL_CONFIG_VERSION
-#  define EFL_CONFIG_VERSION "1.0.2"
+#  define EFL_CONFIG_VERSION "1.0.4"
 #endif
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
