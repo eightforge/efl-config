@@ -3,7 +3,7 @@ include_guard(DIRECTORY)
 
 project(
   efl-config
-  VERSION 1.0.4
+  VERSION 1.0.5
   LANGUAGES CXX
 )
 
@@ -15,5 +15,5 @@ target_include_directories(__efl_config INTERFACE include)
 target_compile_definitions(__efl_config INTERFACE EFL_CONFIG_VERSION="${PROJECT_VERSION}")
 
 if(EFL_CONFIG_SINGLE)
-    target_include_directories(__efl_config INTERFACE single-include)
+  target_include_directories(__efl_config INTERFACE single-include)
 endif()

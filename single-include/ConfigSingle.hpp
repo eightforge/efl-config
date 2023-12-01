@@ -25,7 +25,7 @@
 #define EFL_CONFIG_SINGLE_HPP
 
 #ifndef EFL_CONFIG_VERSION
-#  define EFL_CONFIG_VERSION "1.0.4"
+#  define EFL_CONFIG_VERSION "1.0.5"
 #endif
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
@@ -632,20 +632,17 @@ REGION_BEGIN("config.macro.compiler")
 #if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
 #  define ALWAYS_INLINE __attribute__((always_inline)) inline
 #  define NOINLINE __attribute__((noinline))
+#elif defined(COMPILER_GNU) || defined(COMPILER_LLVM)
+#  define ALWAYS_INLINE [[gnu::always_inline, gnu::flatten, gnu::artificial]] inline
+#  define NOINLINE [[gnu::noinline]]
 #elif defined(COMPILER_NVCPP)
 #  define ALWAYS_INLINE __forceinline__ inline
 #  define NOINLINE __noinline__
-#elif defined(COMPILER_GNU)
-#  define ALWAYS_INLINE [[gnu::always_inline]] inline
-#  define NOINLINE [[gnu::noinline]]
-#elif defined(COMPILER_LLVM)
-#  define ALWAYS_INLINE [[clang::always_inline]] inline
-#  define NOINLINE [[clang::noinline]]
 #elif defined(COMPILER_MSVC)
 #  define ALWAYS_INLINE __forceinline inline
 #  define NOINLINE __declspec(noinline)
 #else
-#  define ALWAYS_INLINE
+#  define ALWAYS_INLINE inline
 #  define NOINLINE
 #endif
 
