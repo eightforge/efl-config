@@ -913,14 +913,14 @@ namespace config {
 
 //=== Architecture Config ===//
 namespace config {
-namespace detail_ {
-  typedef decltype(sizeof(0)) inline_size_t_;
+namespace H {
+  typedef decltype(sizeof(0)) inl_szt_;
 } // namespace detail_
 
   struct Arch {
     static constexpr decltype(EFL_ARCH_NAME) name = EFL_ARCH_NAME;
     static constexpr auto arch_max = EFL_ARCH_REGMAX;
-    static constexpr detail_::inline_size_t_ bit_count = EFL_ARCH_BITS;
+    static constexpr H::inl_szt_ bit_count = EFL_ARCH_BITS;
     static_assert((arch_max / bit_count) == sizeof(void*),
       "Uneven `arch_max`, try using a custom ARCH.");
   };
