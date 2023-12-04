@@ -25,7 +25,7 @@
 #define EFL_CONFIG_SINGLE_HPP
 
 #ifndef EFL_CONFIG_VERSION
-#  define EFL_CONFIG_VERSION "1.0.5"
+#  define EFL_CONFIG_VERSION "1.0.6"
 #endif
 
 #if defined(COMPILER_CUSTOM) || defined(PLATFORM_CUSTOM) || defined(ARCH_CUSTOM)
@@ -434,7 +434,7 @@ REGION_BEGIN("config.macro.cpp")
 #else
 #  define FALLTHROUGH
 #  define FNODISCARD(...)
-#  define GLOBAL
+#  define GLOBAL constexpr
 #  define MAYBE_UNUSED
 #  define NODISCARD
 #endif

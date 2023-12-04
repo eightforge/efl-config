@@ -310,7 +310,7 @@ EFL_REGION_BEGIN("config.macro.cpp")
 #else
 #  define FALLTHROUGH
 #  define FNODISCARD(...)
-#  define GLOBAL
+#  define GLOBAL constexpr
 #  define MAYBE_UNUSED
 #  define NODISCARD
 #endif
