@@ -943,15 +943,15 @@ REGION_CLOSE("config.macro.extend")
 REGION_BEGIN("config.macro.common")
 // ---------------------------------------------------------------------------------------------------------------- //
 
-/** Concise perfect forwarding, requires <utility>. */
-#define FWD(...) std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
+/// Concise perfect forwarding, requires <utility>.
+#define FWD(...) ::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
 
 /**
  * Allows for generals compile failures for templates when instantiated.
  * Requires <type_traits>.
  */
 #define COMPILE_FAILURE(type, message) \
-   static_assert(std::is_same_v<type, struct Fail>, message);
+  static_assert(std::is_same<type, struct Fail>::value, message);
 
 /** Assertion that is only checked in debug mode */
 #if defined(DEBUG_MODE)

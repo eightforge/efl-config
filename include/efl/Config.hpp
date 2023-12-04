@@ -819,15 +819,15 @@ EFL_REGION_CLOSE("config.macro.extend")
 EFL_REGION_BEGIN("config.macro.common")
 // ---------------------------------------------------------------------------------------------------------------- //
 
-/** Concise perfect forwarding, requires <utility>. */
-#define FWD(...) std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
+/// Concise perfect forwarding, requires <utility>.
+#define FWD(...) ::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
 
 /**
  * Allows for generals compile failures for templates when instantiated.
  * Requires <type_traits>.
  */
 #define COMPILE_FAILURE(type, message) \
-   static_assert(std::is_same_v<type, struct Fail>, message);
+  static_assert(std::is_same<type, struct Fail>::value, message);
 
 /** Assertion that is only checked in debug mode */
 #if defined(DEBUG_MODE)
@@ -916,10 +916,10 @@ namespace H {
 
   struct Arch {
     static constexpr decltype(EFL_ARCH_NAME) name = EFL_ARCH_NAME;
-    static constexpr auto arch_max = EFL_ARCH_REGMAX;
-    static constexpr H::inl_szt_ bit_count = EFL_ARCH_BITS;
-    static_assert((arch_max / bit_count) == sizeof(void*),
-      "Uneven `arch_max`, try using a custom ARCH.");
+    static constexpr auto archMax = EFL_ARCH_REGMAX;
+    static constexpr H::inl_szt_ bitCount = EFL_ARCH_BITS;
+    static_assert((archMax / bitCount) == sizeof(void*),
+      "Uneven `archMax`, try using a custom ARCH.");
   };
 
   template <typename T>
