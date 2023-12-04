@@ -924,11 +924,11 @@ namespace H {
 
   template <typename T>
   struct Bit {
-    static constexpr auto count = Arch::bit_count;
+    static constexpr auto count = Arch::bitCount;
     static constexpr auto size = sizeof(T) * count;
   };
 
-#if CPPVER_LEAST(17)
+#if CPPVER_LEAST(14)
   template <typename T>
   GLOBAL auto bitsizeof = Bit<T>::size;
 #endif // CPPVER_LEAST(17)
