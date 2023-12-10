@@ -9,9 +9,7 @@ CMake integration is very simple. When added to a project, ``efl::config``
 will be defined. If the option ``CMAKE_CONFIG_SINGLE`` is enabled, 
 ``ConfigSingle.hpp`` will be included alongside the efl header.
 
-## Standalone Usage
+## Standalone Usage [DEPRECATED]
 
 ``ConfigSingle.hpp`` has drag-and-drop capabilities, just add it anywhere in
 your own projects. Just keep in mind it will majorly pollute the namespace.
-
-This will likely be deprecated in the next major update.
