@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "\"*.impl\"": "\"cpp\"",
+    "cstdlib": "cpp"
+  }
+}

@@ -477,7 +477,13 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define EFLI_UNREACHABLE_ __assume(false)
 # define FORCE_INLINE __forceinline
 #else
-# define EFLI_UNREACHABLE_ void(0)
+# if __has_builtin(__builtin_abort)
+#  define EFLI_UNREACHABLE_ __builtin_abort()
+# else
+/// Requires <cstdlib>.
+#  define EFLI_UNREACHABLE_ ::efl::config::H::abort()
+#  define EFLI_INCLUDE_ABORT_ 1
+# endif
 # define FORCE_INLINE inline
 #endif
 
@@ -848,6 +854,9 @@ EFL_REGION_BEGIN("config.type.enum")
 #define _EFL_CONFIG_PERMANENT
 
 #include <climits>
+#ifdef EFLI_INCLUDE_ABORT_
+# include <cstdlib>
+#endif
 
 namespace efl {
 
@@ -930,9 +939,14 @@ struct Bit {
   static constexpr auto size = sizeof(T) * count;
 };
 
-NORETURN ALWAYS_INLINE void unreachable() NOEXCEPT {
-  EFL_UNREACHABLE();
-}
+#ifdef EFLI_INCLUDE_ABORT_
+namespace H { using ::std::abort; }
+# undef EFLI_INCLUDE_ABORT_
+#endif
+
+NORETURN ALWAYS_INLINE 
+void unreachable() NOEXCEPT 
+{ EFL_UNREACHABLE(); }
 
 #if CPPVER_LEAST(14)
 template <typename T>
