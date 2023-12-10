@@ -740,7 +740,7 @@ REGION_BEGIN("config.macro.compiler")
 #endif
 
 LLVM_IGNORED("-Wkeyword-macro")
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(COMPILER_MSVC)
 /// Remove the deprecated `register` keyword
 #  define register
 #endif
@@ -1030,14 +1030,14 @@ namespace config {
 
 //=== Architecture Config ===//
 namespace config {
-namespace detail_ {
+namespace H {
   typedef decltype(sizeof(0)) inline_size_t_;
-} // namespace detail_
+} // namespace H
 
   struct Arch {
     static constexpr decltype(ARCH_NAME) name = ARCH_NAME;
-    static constexpr auto arch_max = ARCH_REGMAX;
-    static constexpr detail_::inline_size_t_ bit_count = ARCH_BITS;
+    static constexpr H::inline_size_t_ arch_max = ARCH_REGMAX;
+    static constexpr H::inline_size_t_ bit_count = ARCH_BITS;
     static_assert((arch_max / bit_count) == sizeof(void*),
       "Uneven `arch_max`, try using a custom ARCH.");
   };
@@ -1055,5 +1055,49 @@ namespace detail_ {
 } // namespace config
 
 REGION_CLOSE("config.type.enum")
+
+#if CPPVER_LEAST(14)
+# define EFLI_CONF_DEPRECATE_(str) [[deprecated(str)]]
+# define EFLI_WDEP_NAME_ this_file
+#elif defined(COMPILER_CLANG)
+# define EFLI_CONF_DEPRECATE_(str) [[gnu::deprecated(str)]]
+# define EFLI_WDEP_NAME_ this_file
+#elif defined(COMPILER_GNU)
+# define EFLI_CONF_DEPRECATE_(...) __attribute__((deprecated))
+# define EFLI_WDEP_NAME_ config_single_deprecated
+#elif defined(COMPILER_MSVC)
+# define EFLI_CONF_DEPRECATE_(...) __declspec(deprecated)
+# define EFLI_WDEP_NAME_ config_single_deprecated
+#else
+# define EFLI_CONF_DEPRECATE_(...)
+# define EFLI_WDEP_NAME_ config_single_deprecated
+# ifndef CONFIG_IGNORE_DEPRECATION
+#  error ConfigSingle.hpp has been deprecated.  \
+   If you do not wish to see this message,      \
+   define `CONFIG_IGNORE_DEPRECATION`.
+# endif
+#endif
+
+#ifdef COMPILER_MSVC
+ #pragma warning(1:4996)
+#endif // MSVC Check
+
+namespace config {
+namespace H {
+  EFLI_CONF_DEPRECATE_(
+   "ConfigSingle.hpp has been deprecated,"
+   " and may be removed in a future update.")
+  constexpr int EFLI_WDEP_NAME_() { return 0; }
+} // namespace H
+
+struct ConfigSingleDeprecated {
+  static constexpr int val = 
+    H::EFLI_WDEP_NAME_();
+};
+} // namespace config
+
+#ifdef COMPILER_MSVC
+ #pragma warning(default:4996)
+#endif // MSVC Check
 
 #endif  // EFL_CONFIG_SINGLE_HPP
