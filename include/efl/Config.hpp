@@ -92,9 +92,26 @@ EFL_REGION_BEGIN("config.macro.opts")
 #undef COMPILER_BOOST_EXTEND
 #define COMPILER_BOOST_EXTEND 0
 
-#if !defined(__has_include)
+#ifdef __has_include
+# define EFLI_HAS_INCLUDE_ 1
+#else
+# define EFLI_HAS_INCLUDE_ 0
 # define __has_include(...) 0
-#endif // defined(__has_include)
+#endif // if defined(__has_include)
+
+#ifdef __has_builtin
+# define EFLI_HAS_BUILTIN_ 1
+#else
+# define EFLI_HAS_BUILTIN_ 0
+# define __has_builtin(...) 0
+#endif // if defined(__has_builtin)
+
+#ifdef __has_attribute
+# define EFLI_HAS_ATTRIBUTE_ 1
+#else
+# define EFLI_HAS_ATTRIBUTE_ 0
+# define __has_attribute(...) 0
+#endif // if defined(__has_attribute)
 
 EFL_REGION_CLOSE("config.macro.opts")
 

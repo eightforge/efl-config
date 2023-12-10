@@ -3,7 +3,7 @@ include_guard(DIRECTORY)
 
 project(
   efl-config
-  VERSION 1.1.0
+  VERSION 1.1.1
   LANGUAGES CXX
 )
 
