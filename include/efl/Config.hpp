@@ -913,7 +913,7 @@ struct Bit {
   static constexpr auto size = sizeof(T) * count;
 };
 
-NORETURN ALWAYS_INLINE void unreachable() {
+NORETURN ALWAYS_INLINE void unreachable() NOEXCEPT {
   EFL_UNREACHABLE();
 }
 
