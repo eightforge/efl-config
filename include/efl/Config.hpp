@@ -537,9 +537,9 @@ EFL_REGION_BEGIN("config.macro.compiler")
 #endif
 
 #if defined(COMPILER_LLVM)
-# define POINTER(...) [[gsl::Pointer(__VA_ARGS__)]]
+# define GSL_POINTER(...) [[gsl::Pointer(__VA_ARGS__)]]
 #else
-# define POINTER(...)
+# define GSL_POINTER(...)
 #endif
 
 #if defined(COMPILER_MSVC)
