@@ -31,9 +31,18 @@
 # error Custom config settings currently unsupported, check back later.
 #endif
 
-#define EFL_COMPILER_PRAGMA(...) _Pragma(#__VA_ARGS__)
+#if (defined(_MSC_VER) || defined(_MSVC_LANG)) && !defined(__MINGW32__)
+# define EFLI_MSVC_ 1
+#endif
 
-#if defined(_MSC_VER) || defined(_MSVC_LANG)
+#ifndef EFLI_MSVC_
+# define EFL_COMPILER_PRAGMA(...) _Pragma(#__VA_ARGS__)
+#else // MSVC
+# define EFL_COMPILER_PRAGMA(...) __pragma(__VA_ARGS__)
+#endif
+#define EFL_PRAGMA_DEFER(...) EFL_COMPILER_PRAGMA(__VA_ARGS__)
+
+#if defined(EFLI_MSVC_)
 # define EFL_REGION_BEGIN(name) EFL_COMPILER_PRAGMA(region name)
 # define EFL_REGION_CLOSE(comment) EFL_COMPILER_PRAGMA(endregion comment)
 #elif defined(__CODEGEARC__)
@@ -44,13 +53,17 @@
 # define EFL_REGION_CLOSE(...)
 #endif
 
+#if defined(EFLI_MSVC_)
+# include <sal.h>
+#endif
+
 
 /// Provides options for modifying default config settings
 EFL_REGION_BEGIN("config.macro.opts")
 // ---------------------------------------------------------------------------------------------------------------- //
 
 #ifndef COMPILER_STRICT_CONFORMANCE
-# if defined(__INTEL_COMPILER) || (defined(_MSC_VER) && defined(_MSVC_TRADITIONAL))
+# if defined(__INTEL_COMPILER) || (defined(EFLI_MSVC_) && defined(_MSVC_TRADITIONAL))
 #  define COMPILER_STRICT_CONFORMANCE 1
 # else
 #  define COMPILER_STRICT_CONFORMANCE 0
@@ -58,12 +71,18 @@ EFL_REGION_BEGIN("config.macro.opts")
 #endif
 
 #ifndef COMPILER_DEBUG
-# if defined(NDEBUG) || defined(EFLI_NDEBUG_) || \
-   (defined(_MSC_VER) && !defined(_DEBUG))
+# if defined(NDEBUG) || defined(_NDEBUG) || \
+  defined(EFLI_NDEBUG_) || \
+  (defined(EFLI_MSVC_) && !defined(_DEBUG)) || \
+  (defined(__OPTIMIZE__) || defined(__OPTIMIZE_SIZE__))
 #  define COMPILER_DEBUG 0
 # else
 #  define COMPILER_DEBUG 1
 # endif
+#endif
+
+#if !defined(EFLI_NDEBUG_) && (COMPILER_DEBUG == 0)
+# define EFLI_NDEBUG_ 1
 #endif
 
 #ifndef COMPILER_UNICODE_VERSION
@@ -97,21 +116,78 @@ EFL_REGION_BEGIN("config.macro.opts")
 #else
 # define EFLI_HAS_INCLUDE_ 0
 # define __has_include(...) 0
-#endif // if defined(__has_include)
+#endif // defined(__has_include)?
 
 #ifdef __has_builtin
 # define EFLI_HAS_BUILTIN_ 1
 #else
 # define EFLI_HAS_BUILTIN_ 0
 # define __has_builtin(...) 0
-#endif // if defined(__has_builtin)
+#endif // defined(__has_builtin)?
 
 #ifdef __has_attribute
 # define EFLI_HAS_ATTRIBUTE_ 1
 #else
 # define EFLI_HAS_ATTRIBUTE_ 0
 # define __has_attribute(...) 0
-#endif // if defined(__has_attribute)
+#endif // defined(__has_attribute)?
+
+#ifdef __has_cpp_attribute
+# define EFLI_HAS_CPP_ATTRIBUTE_ 1
+#else
+# define EFLI_HAS_CPP_ATTRIBUTE_ 0
+# define __has_cpp_attribute(...) 0
+#endif // defined(__has_cpp_attribute)?
+
+#ifdef __has_declspec_attribute
+# define EFLI_HAS_DECLSPEC_ATTRIBUTE_ 1
+#else
+# define EFLI_HAS_DECLSPEC_ATTRIBUTE_ 0
+# define __has_declspec_attribute(...) 0
+#endif // defined(__has_cpp_attribute)?
+
+#ifdef __has_feature
+# define EFLI_HAS_FEATURE_ 1
+#else
+# define EFLI_HAS_FEATURE_ 0
+# define __has_feature(...) 0
+#endif // defined(__has_feature)?
+
+#ifdef __has_extension
+# define EFLI_HAS_EXTENSION_ 1
+#elif (EFLI_HAS_FEATURE_ == 1)
+// Ancient Clang workaround
+# define EFLI_HAS_EXTENSION_ 1
+# define __has_extension __has_feature
+#else
+# define EFLI_HAS_EXTENSION_ 0
+# define __has_extension(...) 0
+#endif // defined(__has_extension)?
+
+#if EFLI_HAS_CPP_ATTRIBUTE_ && defined(__cplusplus)
+# define EFL_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#else
+# define EFL_HAS_CPP_ATTRIBUTE(...) 0
+#endif
+
+#if defined(__is_identifier) && EFLI_HAS_BUILTIN_
+// Required for some older Intel/Clang versions.
+# define EFL_HAS_BUILTIN(x) (__has_builtin(x) || !__is_identifier(x))
+#else
+# define EFL_HAS_BUILTIN(x) __has_builtin(x)
+#endif
+
+#if defined(EFLI_MSVC_)
+# define EFL_HAS_DECLSPEC(x) 1
+#else
+# define EFL_HAS_DECLSPEC(x) __has_declspec_attribute(x)
+#endif
+
+#ifdef __GNUC__
+# define EFL_EXTENSION __extension__
+#else
+# define EFL_EXTENSION
+#endif
 
 EFL_REGION_CLOSE("config.macro.opts")
 
@@ -244,8 +320,7 @@ EFL_REGION_BEGIN("config.macro.functions")
  * determines the type used for `USTRIFY`
  */
 
-#define STRIFY(...) EFLI_XSTRIFY_(__VA_ARGS__)
-
+#define STRIFY(...)     EFLI_XSTRIFY_(__VA_ARGS__)
 #define LSTRIFY(...)    EFLI_PXSTRIFY_(L, __VA_ARGS__)
 #define RSTRIFY(...)    EFLI_PXSTRIFY_(R, __raw__(__VA_ARGS__)__raw__)
 #define U8STRIFY(...)   EFLI_PXSTRIFY_(u8, __VA_ARGS__)
@@ -276,6 +351,7 @@ EFL_REGION_BEGIN("config.macro.cpp")
 # define COMPILER_CPP_VERSION __cplusplus
 #else
 # error This must be compiled with C++!
+# define COMPILER_CPP_VERSION 0
 #endif
 
 #define CPPVER_NEXT(num) EFL_DEFER(EFL_TCAT(CPPVER, num, _NEXT))
@@ -297,19 +373,18 @@ EFL_REGION_BEGIN("config.macro.cpp")
 
 #if CPPVER_LEAST(20)
 # define CONSTEVAL consteval
-// TODO: Check if this is correct... don't think it is.
-# define VCONSTEXPR constexpr
 # define FDEPRECATED(...) [[deprecated __VA_OPT__((__VA_ARGS__))]]
 # define FNODISCARD(...) [[nodiscard __VA_OPT__((__VA_ARGS__))]]
 # define LIKELY [[likely]]
 # define NO_UNIQUE_ADDRESS [[no_unique_address]]
 # define UNLIKELY [[unlikely]]
+/// Constexpr virtual if C++20.
+# define VCONSTEXPR constexpr
 #else
 # define CONSTEVAL constexpr
-# define VCONSTEXPR
-# define LIKELY
 # define NO_UNIQUE_ADDRESS
-# define UNLIKELY
+/// Constexpr virtual if C++20.
+# define VCONSTEXPR
 #endif
 
 #if CPPVER_LEAST(17)
@@ -321,11 +396,9 @@ EFL_REGION_BEGIN("config.macro.cpp")
 # define MAYBE_UNUSED [[maybe_unused]]
 # define NODISCARD [[nodiscard]]
 #else
-# define FALLTHROUGH
-# define FNODISCARD(...)
+# define FNODISCARD(...) NODISCARD
 # define GLOBAL constexpr
 # define MAYBE_UNUSED
-# define NODISCARD
 #endif
 
 #if CPPVER_LEAST(14)
@@ -346,9 +419,7 @@ EFL_REGION_BEGIN("config.macro.cpp")
 # define THREAD_LOCAL thread_local
 #else
 # define CARRIES_DEPENDENCY
-# define NOEXCEPT
-# define NORETURN
-# define THREAD_LOCAL
+# define THREAD_LOCAL __thread
 #endif
 
 #if !CPPVER_LEAST(11)
@@ -367,6 +438,61 @@ EFL_REGION_BEGIN("config.macro.cpp")
 #ifdef __cplusplus
 # define CONST const
 # define PURE = 0
+#endif
+
+#if !defined(LIKELY) || !defined(LIKELY)
+# if __has_cpp_attribute(likely) && \
+  __has_cpp_attribute(unlikely)
+#  define LIKELY [[likely]]
+#  define UNLIKELY [[unlikely]]
+# else
+#  define LIKELY
+#  define UNLIKELY
+# endif
+#endif
+
+#ifndef FALLTHROUGH
+# if __has_cpp_attribute(fallthrough)
+#  define FALLTHROUGH [[fallthrough]]
+# elif __has_cpp_attribute(gnu::fallthrough)
+#  define FALLTHROUGH [[gnu::fallthrough]]
+# elif __has_cpp_attribute(clang::fallthrough)
+#  define FALLTHROUGH [[clang::fallthrough]]
+# elif __has_attribute(fallthrough) || defined(__GNUC__)
+#  define FALLTHROUGH __attribute__((fallthrough))
+# else
+#  define FALLTHROUGH
+# endif
+#endif
+
+#ifndef NODISCARD
+# if __has_cpp_attribute(gnu::warn_unused_result)
+#  define NODISCARD [[gnu::warn_unused_result]]
+# elif __has_attribute(warn_unused_result) || defined(__GNUC__)
+#  define NODISCARD __attribute__((warn_unused_result))
+# elif defined(EFLI_MSVC_) && (_MSC_VER >= 1700)
+#  define NODISCARD _Check_return_
+# else
+#  define NODISCARD
+# endif
+#endif
+
+#ifndef NOEXCEPT
+# if __has_attribute(nothrow) || defined(__GNUC__)
+#  define NOEXCEPT __attribute__((nothrow))
+# else
+#  define NOEXCEPT
+# endif
+#endif
+
+#ifndef NORETURN
+# if __has_attribute(noreturn) || defined(__GNUC__)
+#  define NORETURN __attribute__((noreturn))
+# elif defined(EFLI_MSVC_)
+#  define NORETURN __declspec(noreturn)
+# else
+#  define NORETURN
+# endif
 #endif
 
 /*
@@ -433,7 +559,7 @@ EFL_REGION_BEGIN("config.macro.compiler")
 #  define COMPILER_CURR VCOMPILER_GCC
 #  define COMPILER_TYPE COMPILER_GCC
 # endif
-#elif defined(_MSC_VER) || defined(_MSVC_LANG)
+#elif defined(EFLI_MSVC_)
 # define COMPILER_MSVC MSVC
 # define COMPILER_CURR VCOMPILER_MSVC
 # define COMPILER_TYPE COMPILER_MSVC
@@ -470,25 +596,56 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define COMPILER_FUNCTION_CLASSIC 1
 #endif
 
-#if defined(COMPILER_GNU) || defined(COMPILER_LLVM)
-# define EFLI_UNREACHABLE_ __builtin_unreachable()
-# define FORCE_INLINE inline __attribute__((always_inline))
+#if __has_builtin(__builtin_unreachable) || defined(__GNUC__)
+# define EFLI_UNREACHABLE_() __builtin_unreachable()
 #elif defined(COMPILER_MSVC)
-# define EFLI_UNREACHABLE_ __assume(false)
-# define FORCE_INLINE __forceinline
+# define EFLI_UNREACHABLE_() __assume(false)
 #else
 # if __has_builtin(__builtin_abort)
-#  define EFLI_UNREACHABLE_ __builtin_abort()
+#  define EFLI_UNREACHABLE_() __builtin_abort()
 # else
 /// Requires <cstdlib>.
-#  define EFLI_UNREACHABLE_ ::efl::config::H::abort()
+#  define EFLI_UNREACHABLE_() ::efl::config::H::abort()
 #  define EFLI_INCLUDE_ABORT_ 1
 # endif
-# define FORCE_INLINE inline
 #endif
 
 /// `std::unreachable` in macro form.
-#define EFL_UNREACHABLE(...) EFLI_UNREACHABLE_
+#define EFL_UNREACHABLE(...) EFLI_UNREACHABLE_()
+
+
+#if defined(COMPILER_CLANG)
+# define EFL_MESSAGE(...) \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Wunknown-pragmas\"") \
+  EFL_COMPILER_PRAGMA(message #__VA_ARGS__) \
+  _Pragma("clang diagnostic pop")
+#elif defined(COMPILER_GNU) || defined(COMPILER_LLVM)
+# define EFL_MESSAGE(...) EFL_COMPILER_PRAGMA(message #__VA_ARGS__)
+#elif defined(COMPILER_MSVC)
+# define EFL_MESSAGE(...) EFL_COMPILER_PRAGMA(message(#__VA_ARGS__))
+#else
+# define EFL_MESSAGE(...)
+# define EFL_TODO(...) EFL_COMPILER_PRAGMA(todo #__VA_ARGS__)
+#endif
+
+#ifndef EFL_TODO
+# define EFL_TODO(...) EFL_MESSAGE("TODO: " #__VA_ARGS__)
+#endif
+
+#if __has_attribute(diagnose_if)
+# define EFLI_DIAGNOSE_IF_(expr, msg, level) \
+  __attribute__((diagnose_if(expr, msg, level)))
+#else
+# define EFLI_DIAGNOSE_IF_(...)
+#endif
+
+/// Prints a warning at parse-time if true.
+#define EFL_WARN_IF(expr, msg) \
+  EFLI_DIAGNOSE_IF_((expr), msg, "warning")
+/// Errors at parse-time if true. 
+#define EFL_ERROR_IF(expr, msg) \
+  EFLI_DIAGNOSE_IF_((expr), msg, "error")
 
 #if defined(COMPILER_MINGW)
 # define CLRCALL __clrcall
@@ -513,33 +670,158 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define RESTRICT
 #endif
 
-#if defined(COMPILER_LLVM) || defined(COMPILER_GNU)
-# define NONNULL(...) __attribute__((nonnull(__VA_ARGS__)))
+#if __has_attribute(nonnull) || defined(__GNUC__)
+# define NONNULL(...) __attribute__((nonnull))
 #else
 # define NONNULL(...)
 #endif
 
-#if CPPVER_MOST(98) && (defined(COMPILER_GNU) || defined(COMPILER_LLVM))
-# define ALWAYS_INLINE __attribute__((always_inline)) inline
+#if __has_attribute(returns_nonnull) || defined(__GNUC__)
+# define RETURNS_NONNULL __attribute__((returns_nonnull))
+#elif defined(COMPILER_MSVC)
+# define RETURNS_NONNULL _Ret_notnull_
+#else
+# define RETURNS_NONNULL
+#endif
+
+#ifndef FORCE_INLINE
+// Keeping for backwards compat.
+# define FORCE_INLINE EFL_MESSAGE( \
+  This keyword has been deprecated. \
+  Prefer "ALWAYS_INLINE".) inline
+#endif
+
+#if defined(COMPILER_GNU) || defined(COMPILER_LLVM)
+# if __has_cpp_attribute(gnu::always_inline)
+#  if __has_cpp_attribute(gnu::artificial)
+#   define EFLI_INLINE_ATTRS_ gnu::always_inline, gnu::artificial
+#  else
+#   define EFLI_INLINE_ATTRS_ gnu::always_inline
+#  endif
+#  define ALWAYS_INLINE [[EFLI_INLINE_ATTRS_]] inline
+#  define EFLI_INLINE_TY_ 1
+# else // GNU/LLVM, but no C++ style attribute.
+#  define EFLI_INLINE_ATTRS_ always_inline
+#  define ALWAYS_INLINE __attribute__((EFLI_INLINE_ATTRS_)) inline
+#  define EFLI_INLINE_TY_ 0
+# endif // always_inline
 # define NOINLINE __attribute__((noinline))
-#elif defined(COMPILER_GNU) || defined(COMPILER_LLVM)
-# define ALWAYS_INLINE [[gnu::always_inline, gnu::flatten, gnu::artificial]] inline
-# define NOINLINE [[gnu::noinline]]
 #elif defined(COMPILER_NVCPP)
 # define ALWAYS_INLINE __forceinline__ inline
 # define NOINLINE __noinline__
 #elif defined(COMPILER_MSVC)
-# define ALWAYS_INLINE __forceinline inline
+# define ALWAYS_INLINE __forceinline
 # define NOINLINE __declspec(noinline)
 #else
 # define ALWAYS_INLINE inline
 # define NOINLINE
+#endif // always_inline, noinline
+
+#if defined(EFLI_INLINE_TY_)
+# if __has_cpp_attribute(gnu::flatten) && (EFLI_INLINE_TY_ == 1)
+/// Inlines and flattens the marked function.
+#  define AGGRESSIVE_INLINE \
+  [[EFLI_INLINE_ATTRS_, gnu::flatten]] inline
+# elif (__has_attribute(flatten) || defined(__GNUC__)) && \
+  (EFLI_INLINE_TY_ == 0)
+/// Inlines and flattens the marked function.
+#  define AGGRESSIVE_INLINE \
+   __attribute__((EFLI_INLINE_ATTRS_, flatten)) inline
+# else
+#  define AGGRESSIVE_INLINE ALWAYS_INLINE
+# endif // aggressive_inline
+# undef EFLI_INLINE_TY_
+#else
+# define AGGRESSIVE_INLINE ALWAYS_INLINE
 #endif
 
-#if defined(COMPILER_LLVM)
-# define GSL_POINTER(...) [[gsl::Pointer(__VA_ARGS__)]]
+#if defined(COMPILER_MSVC)
+/// Inlines the marked function.
+# define HINT_INLINE __forceinline
 #else
-# define GSL_POINTER(...)
+# define HINT_INLINE inline
+#endif
+
+#if defined(COMPILER_CLANG)
+/// Like `static`, but applicable to classes.
+# define COMPILER_HIDDEN [[clang::internal_linkage]]
+#elif __has_attribute(internal_linkage)
+/// Like `static`, but applicable to classes.
+# define COMPILER_HIDDEN __attribute__((internal_linkage))
+#else
+# define COMPILER_HIDDEN
+#endif
+
+#if __has_cpp_attribute(gnu::malloc)
+# define COMPILER_UNALIASED [[gnu::malloc]]
+#elif __has_attribute(malloc)
+# define COMPILER_UNALIASED __attribute__((malloc))
+#elif __has_attribute(__malloc__) || defined(__GNUC__)
+# define COMPILER_UNALIASED __attribute__((__malloc__))
+#elif defined(COMPILER_MSVC)
+# define COMPILER_UNALIASED __declspec(restrict)
+#else
+# define COMPILER_UNALIASED
+#endif
+
+#if __has_cpp_attribute(clang::no_sanitize)
+# define NOSANITIZE(...) [[clang::no_sanitize(__VA_ARGS__)]]
+#elif __has_attribute(no_sanitize)
+# define NOSANITIZE(...) __attribute__((no_sanitize(__VA_ARGS__)))
+#endif
+#ifndef NOSANITIZE
+# define NOSANITIZE(...)
+#endif
+
+#if CPPVER_LEAST(20) && (defined(__GNUC__) || defined(__clang__))
+# if __has_cpp_attribute(clang::coro_wrapper) && \
+  __has_cpp_attribute(clang::coro_return_type) && \
+  __has_cpp_attribute(clang::coro_only_destroy_when_complete) && \
+  __has_cpp_attribute(clang::coro_lifetimebound)
+#  define CORO_ANALYZE [[clang::coro_return_type, clang::coro_lifetimebound]]
+#  define CORO_COMPLETION_DTOR [[clang::coro_only_destroy_when_complete]]
+#  define CORO_WRAPPER [[clang::coro_wrapper]]
+#  define EFLI_CORO_ 1
+# elif __has_attribute(coro_wrapper) && \
+  __has_attribute(coro_return_type) && \
+  __has_attribute(coro_only_destroy_when_complete) && \
+  __has_attribute(coro_lifetimebound)
+#  define CORO_ANALYZE __attribute__((coro_return_type, coro_lifetimebound))
+#  define CORO_COMPLETION_DTOR __attribute__((coro_only_destroy_when_complete))
+#  define CORO_WRAPPER __attribute__((coro_wrapper))
+#  define EFLI_CORO_ 1
+# endif
+#endif
+#ifndef EFLI_CORO_
+# define CORO_ANALYZE
+# define CORO_COMPLETION_DTOR
+# define CORO_WRAPPER
+#else
+# undef EFLI_CORO_
+#endif
+
+#if __has_cpp_attribute(gsl::Owner)
+# define GSL_OWNER [[gsl::Owner]]
+#else
+# define GSL_OWNER
+#endif
+
+#if __has_cpp_attribute(gsl::Pointer)
+# define GSL_POINTER [[gsl::Pointer]]
+#else
+# define GSL_POINTER
+#endif
+
+#if __has_cpp_attribute(gnu::hot) && \
+ __has_cpp_attribute(gnu::cold)
+# define COMPILER_HOT [[gnu::hot]]
+# define COMPILER_COLD [[gnu::cold]]
+#elif (__has_attribute(hot) && __has_attribute(cold)) || defined(__GNUC__)
+# define COMPILER_HOT __attribute__((hot))
+# define COMPILER_COLD __attribute__((cold))
+#else
+# define COMPILER_HOT
+# define COMPILER_COLD
 #endif
 
 #if defined(COMPILER_MSVC)
@@ -547,6 +829,12 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define COMPILER_UUID_I(value) uuid(STRIFY(value))
 #else
 # define COMPILER_UUID(...)
+#endif
+
+#if defined(COMPILER_MSVC)
+# define MSVC_EMPTY_BASES __declspec(empty_bases)
+#else
+# define MSVC_EMPTY_BASES
 #endif
 
 #if defined(COMPILER_GNU) || defined(COMPILER_LLVM)
@@ -557,6 +845,10 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define COMPILER_FUNCTION __func__
 # undef  COMPILER_FUNCTION_CLASSIC
 # define COMPILER_FUNCTION_CLASSIC 1
+#endif
+
+#if !EFLI_HAS_CPP_ATTRIBUTE_
+# undef __has_cpp_attribute
 #endif
 
 /**
