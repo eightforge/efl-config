@@ -164,6 +164,14 @@ EFL_REGION_BEGIN("config.macro.opts")
 # define __has_extension(...) 0
 #endif // defined(__has_extension)?
 
+// Used for compiler extensions.
+#ifdef __has_plugin
+# define EFLI_HAS_PLUGIN_ 1
+#else
+# define EFLI_HAS_PLUGIN_ 0
+# define __has_plugin(...) 0
+#endif // defined(__has_plugin)?
+
 #if EFLI_HAS_CPP_ATTRIBUTE_ && defined(__cplusplus)
 # define EFL_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
 #else
@@ -376,10 +384,14 @@ EFL_REGION_BEGIN("config.macro.cpp")
 # define FDEPRECATED(...) [[deprecated __VA_OPT__((__VA_ARGS__))]]
 # define FNODISCARD(...) [[nodiscard __VA_OPT__((__VA_ARGS__))]]
 # define LIKELY [[likely]]
-# define NO_UNIQUE_ADDRESS [[no_unique_address]]
 # define UNLIKELY [[unlikely]]
 /// Constexpr virtual if C++20.
 # define VCONSTEXPR constexpr
+# ifndef EFLI_MSVC_
+#  define NO_UNIQUE_ADDRESS [[no_unique_address]]
+# else
+#  define NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+# endif
 #else
 # define CONSTEVAL constexpr
 # define NO_UNIQUE_ADDRESS
