@@ -776,6 +776,12 @@ EFL_REGION_BEGIN("config.macro.compiler")
 # define COMPILER_UNALIASED
 #endif
 
+#if __has_attribute(nodebug)
+# define NODEBUG __attribute__((nodebug))
+#else
+# define NODEBUG
+#endif
+
 #if __has_cpp_attribute(clang::no_sanitize)
 # define NOSANITIZE(...) [[clang::no_sanitize(__VA_ARGS__)]]
 #elif __has_attribute(no_sanitize)
