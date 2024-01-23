@@ -1255,7 +1255,7 @@ namespace H { using ::std::abort; }
 #endif
 
 NORETURN ALWAYS_INLINE 
-void unreachable() NOEXCEPT 
+ void unreachable() NOEXCEPT
 { EFL_UNREACHABLE(); }
 
 #if CPPVER_LEAST(14)
